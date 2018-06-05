@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block script %}
+    <script type = "text/javascript" src = "{{url_for('static', filename='track_model.js')}}" ></script>
+{% endblock %}
+
+{% block title %}
+    <title>Train Sim</title>
+{% endblock %}
+
+{% block style %}
+	<link href="{{url_for('static', filename='track_model.css')}}" rel="stylesheet">
+{% endblock %}
+
+{% block header %}
+	<div class="header-container">
+		<h1 class="header-text">Track Model</h1>
+	<div>
+{% endblock %}
+
+{% block body %}
+    <div class="block-button-container">
+        {% for id in block_ids %}
+            <button class="module-button" id="g{{id}}-button" type="button" onclick="getBlock({{id}});">Block{{id}}</button>
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block script %}
+    <script type = "text/javascript" src = "{{url_for('static', filename='train_model.js')}}" ></script>
+{% endblock %}
+
+{% block title %}
+    <title>CTC</title>
+{% endblock %}
+
+{% block style %}
+	<link href="{{url_for('static', filename='train_model.css')}}" rel="stylesheet">
+{% endblock %}
+
+{% block header %}
+	<div class="header-container">
+		<h1 class="header-text">Train Model</h1>
+	<div>
+{% endblock %}
+
+{% block body %}
+    <div id="train-viewer">
+    </div>
+{% endblock %}
