@@ -24,9 +24,10 @@ class Block(db.Model):
     crossing_id = db.Column(db.Integer, db.ForeignKey('crossing.id'))
     crossing = db.relationship("Crossing", backref=db.backref("block"))
 
-    train_id = db.Column(db.Integer, db.ForeignKey('train.id'))
+    # train_id = db.Column(db.Integer)
 
-    message = db.Column(db.String(100))
+    # message_id = db.Column(db.Integer, db.ForeignKey('message.id'))
+    # message = db.relationship("Message", backref=db.backref("block"))
 
     def _repr_(self):
         return "<Block {}>".format(repr(self.id))
@@ -79,17 +80,35 @@ class Train(db.Model):
     height = db.Column(db.Float)
     mass = db.Column(db.Float)
     speed = db.Column(db.Float)
+    authority = db.Column(db.String(10))
     crewCount = db.Column(db.Integer)
     passengerCount = db.Column(db.Integer)
     leftDoorState = db.Column(db.Boolean)
     rightDoorState = db.Column(db.Boolean)
 
+    # message_id = db.Column(db.Integer, db.ForeignKey('message.id'))
+    # message = db.relationship("Message", backref=db.backref("train"))
+
     # blocks = db.relationship('Block', backref='train', lazy='dynamic')
     front_block_id = db.Column(db.Integer, db.ForeignKey('block.id'))
     back_block_id = db.Column(db.Integer, db.ForeignKey('block.id'))
 
-    front_block = db.relationship('Block', foreign_keys=[front_block_id])
-    back_block = db.relationship('Block', foreign_keys=[back_block_id])
+    front_block = db.relationship('Block', backref=db.backref('front_train', uselist=False), foreign_keys=[front_block_id])
+    back_block = db.relationship('Block', backref=db.backref('back_train', uselist=False), foreign_keys=[back_block_id])
 
     def _repr_(self):
         return "<Train {}>".format(repr(self.id))
+
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    text = db.Column(db.String(100))
+    block_id = db.Column(db.Integer, db.ForeignKey('block.id'))
+    block = db.relationship("Block", backref=db.backref("parent", uselist=False))
+    train_id = db.Column(db.Integer, db.ForeignKey('train.id'))
+    train = db.relationship("Train", backref=db.backref("parent", uselist=False))
+
+    # block_id = db.Column(db.Integer, db.ForeignKey('block.id'))
+    # train_id = db.Column(db.Integer, db.ForeignKey('train.id'))
+
+    def _repr_(self):
+        return "<Message {}>".format(repr(self.id))

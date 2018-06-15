@@ -1,6 +1,6 @@
 from flask_restful import Resource, fields, reqparse, marshal_with, inputs
 from flask import request, abort, flash, jsonify, json
-from models import db, Block, Station, Switch, Crossing, Light, Train
+from models import db, Block, Station, Switch, Crossing, Light, Train, Message
 
 trainLength = 1000.0
 trainHeight = 100.0
@@ -17,8 +17,7 @@ block_fields = {
     'occupancy': fields.Boolean,
     'switch_id': fields.Integer,
     'station_id': fields.Integer,
-    'crossing_id': fields.Integer,
-    'message': fields.String
+    'crossing_id': fields.Integer
 }
 
 station_fields = {
@@ -50,6 +49,7 @@ train_fields = {
     'id': fields.Integer,
 	'name': fields.String,
     'speed': fields.Float,
+    'authority': fields.String,
     'length': fields.Float,
     'width': fields.Float,
     'height': fields.Float,
@@ -60,8 +60,15 @@ train_fields = {
     'back_block_id': fields.Integer
 }
 
+# block_message_fields = {
+#     'message': fields.String
+# }
+
 message_fields = {
-    'message': fields.String
+    'id': fields.Integer,
+    'text': fields.String,
+    'block_id': fields.Integer,
+    'train_id': fields.Integer
 }
 
 add_block_parser = reqparse.RequestParser(bundle_errors=True)
@@ -106,11 +113,21 @@ add_train_parser.add_argument('name', type=str, required=True, location='json')
 
 update_train_parser = reqparse.RequestParser(bundle_errors=True)
 update_train_parser.add_argument('speed', type=float, location='json')
+update_train_parser.add_argument('authority', type=str, location='json')
 update_train_parser.add_argument('crewCount', type=int, location='json')
 update_train_parser.add_argument('passengerCount', type=int, location='json')
+update_train_parser.add_argument('front_block_id', type=int, location='json')
+update_train_parser.add_argument('back_block_id', type=int, location='json')
+
+# block_message_parser = reqparse.RequestParser(bundle_errors=True)
+# block_message_parser.add_argument('message', type=str, location='json')
 
 message_parser = reqparse.RequestParser(bundle_errors=True)
-message_parser.add_argument('message', type=str, location='json')
+message_parser.add_argument('text', type=str, location='json')
+
+add_message_parser = reqparse.RequestParser(bundle_errors=True)
+add_message_parser.add_argument('text', type=str, required=True, location='json')
+add_message_parser.add_argument('block_id', type=int, required=True, location='json')
 
 class BlockResource(Resource):
     @marshal_with(block_fields)
@@ -378,15 +395,30 @@ class TrainResource(Resource):
             abort(404, "Train %d: not found." % id)
 
         train_args = update_train_parser.parse_args()
-        train.speed = train_args['speed']
-        train.blocks = []
-        for block in train_args['blocks']:
-            block = Block.query.filter_by(id=block).first()
-            train.blocks.append(block)
+        if "speed" in train_args:
+            train.speed = train_args['speed']
+        if "authority" in train_args:
+            train.authority = train_args['authority']
+        if "crewCount" in train_args:
+            train.crewCount = train_args['crewCount']
+        if "passengerCount" in train_args:
+            train.passengerCount = train_args['passengerCount']
+
+        if "front_block_id" in train_args:
+            front_block = Block.query.filter_by(id=train_args['front_block_id']).first()
+            if not front_block:
+                abort(404, "Block %d: not found." % id)
+            train.front_block = front_block
+
+        if "back_block_id" in train_args:
+            back_block = Block.query.filter_by(id=train_args['back_block_id']).first()
+            if not back_block:
+                abort(404, "Block %d: not found." % id)
+            train.back_block = back_block
 
         db.session.commit()
 
-        return switch
+        return train, 201
 
 class TrainListResource(Resource):
     @marshal_with(train_fields)
@@ -424,27 +456,84 @@ class TrainListResource(Resource):
 
         return train, 201
 
+# class MessageResource(Resource):
+#     @marshal_with(message_fields)
+#     def get(self, id):
+#         block = Block.query.filter_by(id=id).first()
+#
+#         if not block:
+#             abort(404, "Block %d: not found." % id)
+#
+#
+#         return block, 200
+#
+#     @marshal_with(message_fields)
+#     def put(self, id):
+#         block = Block.query.filter_by(id=id).first()
+#
+#         if not block:
+#             abort(404, "Block %d: not found." % id)
+#
+#         message_args = message_parser.parse_args()
+#         block.message = message_args['text']
+#
+#         db.session.commit()
+#
+#         return block, 201
+
 class MessageResource(Resource):
     @marshal_with(message_fields)
     def get(self, id):
-        block = Block.query.filter_by(id=id).first()
+        message = Message.query.filter_by(block_id=id).first()
 
-        if not block:
-            abort(404, "Block %d: not found." % id)
+        if not message:
+            abort(404, "Message %d: not found." % id)
 
-
-        return block, 200
+        return message, 200
 
     @marshal_with(message_fields)
     def put(self, id):
-        block = Block.query.filter_by(id=id).first()
+        message = Message.query.filter_by(block_id=id).first()
 
-        if not block:
-            abort(404, "Block %d: not found." % id)
+        if not message:
+            abort(404, "Message %d: not found." % id)
 
         message_args = message_parser.parse_args()
-        block.message = message_args['text']
+        message.text = message_args['text']
 
         db.session.commit()
 
-        return block, 201
+        return message, 201
+
+class MessageListResource(Resource):
+    @marshal_with(message_fields)
+    def get(self):
+        messages = Message.query.all()
+        return messages
+
+    @marshal_with(message_fields)
+    def post(self):
+        message_args = add_message_parser.parse_args()
+
+        # Get block
+        block = Block.query.filter_by(id=message_args['block_id']).first()
+        if not block:
+            abort(404, "Block %d: not found." % id)
+
+        # Get train with front end on block
+        train = Train.query.filter_by(front_block_id=message_args['block_id']).first()
+
+        if 'id' not in message_args:
+            highest = Message.query.order_by(Message.id).last()
+            message_id = highest + 1
+        else:
+            message_id = message_args['id']
+
+        message = Message(id=message_id,text=message_args['text'])
+        message.block = block
+        message.train = train
+
+        db.session.add(message)
+        db.session.commit()
+
+        return message, 201

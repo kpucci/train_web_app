@@ -26,7 +26,8 @@ from models import (
     Switch,
     Crossing,
     Light,
-    Train
+    Train,
+    Message
 )
 
 from resources import (
@@ -119,11 +120,17 @@ def testdb_command():
     switch1.lights.append(light1)
     switch1.lights.append(light2)
 
-    block1.message = "hello"
+    # block1.message = "hello"
 
     train1 = Train(id=1,name="train1",length=1000.0,width=100.0,height=100.0,mass=1000.0,crewCount=0,passengerCount=0)
     db.session.add(train1)
-    train1.front_block_id = block1.id
+    train1.front_block = block1
+    # block1.train_id = block1.front_train.id
+
+    msg1 = Message(id=1,text="50,GO")
+    db.session.add(msg1)
+    msg1.block = block1
+    msg1.train = train1
 
     db.session.commit()
 

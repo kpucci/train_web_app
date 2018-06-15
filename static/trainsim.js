@@ -13,8 +13,9 @@ function makeReq(method, target, retCode, callback, data)
 
 	if (data)
     {
-		// alert(data);
+		alert(data);
 		httpRequest.setRequestHeader('Content-Type', 'application/json');
+        httpRequest.setRequestHeader('Authorization', 'token ba910a6d-b27b-4947-8134-e5aa0bd02959');
 		httpRequest.send(data);
 	}
 	else
