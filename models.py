@@ -103,12 +103,20 @@ class Message(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     text = db.Column(db.String(100))
     block_id = db.Column(db.Integer, db.ForeignKey('block.id'))
-    block = db.relationship("Block", backref=db.backref("parent", uselist=False))
+    block = db.relationship("Block", backref=db.backref("message", uselist=False))
     train_id = db.Column(db.Integer, db.ForeignKey('train.id'))
-    train = db.relationship("Train", backref=db.backref("parent", uselist=False))
+    train = db.relationship("Train", backref=db.backref("message", uselist=False))
 
     # block_id = db.Column(db.Integer, db.ForeignKey('block.id'))
     # train_id = db.Column(db.Integer, db.ForeignKey('train.id'))
 
     def _repr_(self):
         return "<Message {}>".format(repr(self.id))
+
+class CTCRequest(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    type = db.Column(db.Integer)
+    input = db.Column(db.String(500))
+
+    def _repr_(self):
+        return "<CTCRequest {}>".format(repr(self.id))

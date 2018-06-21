@@ -24,6 +24,14 @@ function pollTrains()
     makeReq("GET", "/trains/", 200, repopulateTrains);
 }
 
+function makeCtcRequest(type,input)
+{
+    var data;
+	data = '{"type":"' + type + '","input":"' + input + '"}';
+
+    makeReq("PUT", "/ctcrequest/", 201, poller, data);
+}
+
 function getOccupancy(responseText)
 {
     var block = JSON.parse(responseText);

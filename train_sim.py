@@ -27,7 +27,8 @@ from models import (
     Crossing,
     Light,
     Train,
-    Message
+    Message,
+    CTCRequest
 )
 
 from resources import (
@@ -43,7 +44,8 @@ from resources import (
     LightListResource,
     TrainResource,
     TrainListResource,
-    MessageResource
+    MessageResource,
+    CTCRequestResource
 )
 
 app = Flask(__name__)
@@ -73,6 +75,7 @@ api.add_resource(TrainListResource, '/trains/')
 api.add_resource(TrainResource, '/trains/<int:id>')
 # api.add_resource(MessageListResource, '/messages/')
 api.add_resource(MessageResource, '/messages/<int:id>')
+api.add_resource(CTCRequestResource, '/ctcrequest/')
 
 @app.cli.command('initdb')
 def initdb_command():
@@ -131,6 +134,17 @@ def testdb_command():
     db.session.add(msg1)
     msg1.block = block1
     msg1.train = train1
+
+    msg2 = Message(id=2,text="100,GO")
+    db.session.add(msg2)
+    msg2.block = block2
+
+    msg3 = Message(id=3,text="0,STOP")
+    db.session.add(msg3)
+    msg3.block = block3
+
+    request = CTCRequest(id=0,type="",input="")
+    db.session.add(request)
 
     db.session.commit()
 

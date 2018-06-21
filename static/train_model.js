@@ -14,17 +14,13 @@ function setup()
 
 function poller()
 {
+    console.log("-----Polling-----");
     makeReq("GET", "/trains/", 200, repopulateTrains);
-}
-
-function pollBlockMessage(blockID)
-{
-	makeReq("GET", "/messages/" + blockID, 200, populateMessage);
 }
 
 function repopulateTrains(responseText)
 {
-	console.log("repopulating!");
+	console.log("-----Repopulating trains-----");
 	var trains = JSON.parse(responseText);
     var trainViewer = document.getElementById("train-viewer");
     var trainDiv, id, name, speed, authority, length, width, height, mass, crew, pass, frontBlock, backBlock;
@@ -76,16 +72,23 @@ function repopulateTrains(responseText)
         pass.id = "train-pass-" + trains[t]['id'];
 
         frontBlock = document.createElement("p");
-        frontBlock.innerHTML = "front block: " + trains[t]['front_block_id'];
+        if(trains[t]['front_block_id'] != 0)
+            frontBlock.innerHTML = "front block: " + trains[t]['front_block_id'];
+        else
+            frontBlock.innerHTML = "front block: yard";
         frontBlock.id = "train-front-" + trains[t]['id'];
 
         backBlock = document.createElement("p");
-        backBlock.innerHTML = "back block: " + trains[t]['back_block_id'];
+        if(trains[t]['back_block_id'] != 0)
+            backBlock.innerHTML = "back block: " + trains[t]['back_block_id'];
+        else
+            backBlock.innerHTML = "back block: yard";
         backBlock.id = "train-back-" + trains[t]['id'];
 
         trainDiv.appendChild(name);
         trainDiv.appendChild(id);
         trainDiv.appendChild(speed);
+        trainDiv.appendChild(authority);
         trainDiv.appendChild(length);
         trainDiv.appendChild(width);
         trainDiv.appendChild(height);
@@ -100,25 +103,37 @@ function repopulateTrains(responseText)
         pollBlockMessage(trains[t]['front_block_id']);
 	}
 
-	// timeoutID = window.setTimeout(poller, timeout);
+	timeoutID = window.setTimeout(poller, timeout);
+}
+
+function pollBlockMessage(blockID)
+{
+    console.log("-----Poll block message-----");
+	makeReq("GET", "/messages/" + blockID, 200, populateMessage);
 }
 
 function populateMessage(responseText)
 {
+    console.log("-----Populating message-----");
     var message = JSON.parse(responseText);
-    var trainDiv = document.getElementById("train-div-" + message['train_id']);
-    var msg = document.createElement("p");
-    msg.innerHTML = "message: " + message['text'];
+    if(message['text'] != null && message['train_id'] != 0)
+    {
+        var trainDiv = document.getElementById("train-div-" + message['train_id']);
+        var msg = document.createElement("p");
+        msg.innerHTML = "message: " + message['text'];
 
-    trainDiv.appendChild(msg);
+        trainDiv.appendChild(msg);
 
-    // Parse message for speed and authority
-    var speed = extractSpeed(message['text']);
-    var authority = extractAuthority(message['text']);
+        // Parse message for speed and authority
+        var speed = extractSpeed(message['text']);
+        var authority = extractAuthority(message['text']);
 
-    updateSpeedAndAuth(speed,authority,message['train_id']);
-
-    timeoutID = window.setTimeout(poller, timeout);
+        updateSpeedAndAuth(speed,authority,message['train_id']);
+    }
+    else
+    {
+        timeoutID = window.setTimeout(poller, timeout);
+    }
 }
 
 function extractSpeed(message)
@@ -147,19 +162,19 @@ function extractAuthority(message)
 
 function updateSpeedAndAuth(speed, authority, trainID)
 {
+    console.log("-----Update speed and authority-----");
+    console.log("Speed: " + speed);
+    console.log("Authority: " + authority);
+    console.log("Train ID: " + trainID);
 	var data;
 	data = '{"speed":' + speed + ', "authority":"' + authority + '"}';
 
     makeReq("PUT", "/trains/" + trainID, 201, populateSpeedAndAuth, data);
-
-    if(speed > 0 && (authority == AUTH.GO || authority == AUTH.CAUTION))
-        moveForward(trainID);
-    else
-        timeoutID = window.setTimeout(poller, timeout);
 }
 
 function populateSpeedAndAuth(responseText)
 {
+    console.log("-----Populating speed and authority-----");
     var train = JSON.parse(responseText);
     var trainDiv = document.getElementById("train-div-" + train['id']);
     var speed = document.getElementById("train-speed-" + train['id']);
@@ -167,12 +182,33 @@ function populateSpeedAndAuth(responseText)
 
     var authority = document.getElementById("train-authority-" + train['id']);
     authority.innerHTML = "authority: " + train['authority'];
+
+    if(parseInt(train['speed']) > 0 && (train['authority'] == AUTH.GO || train['authority'] == AUTH.CAUTION))
+        moveForward(train['id']);
+    else
+        timeoutID = window.setTimeout(poller, timeout);
 }
 
 function moveForward(trainID)
 {
-    var front = parseInt(document.getElementById("train-front-" + trainID).innerHTML);
-    var back = parseInt(document.getElementById("train-back-" + trainID).innerHTML);
+    console.log("-----Move train forward-----");
+    var frontText = document.getElementById("train-front-" + trainID).innerHTML.split(": ")[1];
+    var front;
+    if(frontText == "yard")
+        front = 0;
+    else
+        front = parseInt(frontText);
+
+
+    var backText = document.getElementById("train-back-" + trainID).innerHTML.split(": ")[1];
+    var back;
+    if(backText == "yard")
+        back = 0;
+    else
+        back = parseInt(backText);
+
+    console.log("Front: " + front);
+    console.log("Back: " + back);
 
     var frontNext, backNext;
 
@@ -187,11 +223,18 @@ function moveForward(trainID)
         backNext = back;
     }
 
+    console.log("FrontNext: " + frontNext);
+    console.log("BackNext: " + backNext);
+
     window.setTimeout(function(){updateTrainLocation(frontNext,backNext,trainID);}, 5000);
 }
 
 function updateTrainLocation(front,back,trainID)
 {
+    console.log("-----Update train location-----");
+    console.log("Front: " + front);
+    console.log("Back: " + back);
+    console.log("Train ID: " + trainID);
     var data;
 	data = '{"front_block_id":' + front + ', "back_block_id": ' + back + '}';
     makeReq("PUT", "/trains/" + trainID, 201, populateTrainLocation, data);
@@ -199,6 +242,7 @@ function updateTrainLocation(front,back,trainID)
 
 function populateTrainLocation(responseText)
 {
+    console.log("-----Populating train location-----");
     var train = JSON.parse(responseText);
     var trainDiv = document.getElementById("train-div-" + train['id']);
     var front = document.getElementById("train-front-" + train['id']);
@@ -207,7 +251,7 @@ function populateTrainLocation(responseText)
     var back = document.getElementById("train-back-" + train['id']);
     back.innerHTML = "back block: " + train['back_block_id'];
 
-    timeoutID = window.setTimeout(poller, timeout);
+    // timeoutID = window.setTimeout(poller, timeout);
 }
 
 

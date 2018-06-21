@@ -1,3 +1,5 @@
+import * as trackcontroller from '/track_controller.js';
+
 var timeoutID;
 var timeout = 5000;
 
