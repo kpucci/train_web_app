@@ -26,4 +26,32 @@
     <div>
         <ul id="train-list"></ul>
     </div>
+    <div>
+        <input type="text" name="request-maintenance" id="request-maintenance">
+        <button id="request-maintenance-button" type="button" onclick="requestMaintenance();">Request Maintenance</button>
+    </div>
+    <div>
+        <input type="text" name="lift-maintenance" id="lift-maintenance">
+        <button id="lift-maintenance-button" type="button" onclick="liftMaintenance();">Lift Maintenance</button>
+    </div>
+    <div>
+        <ul id="block-list"></ul>
+    </div>
+    <div>
+        <input type="text" name="test-switch" id="test-switch">
+        <button id="test-switch-button" type="button" onclick="testSwitch();">Test Switch</button>
+    </div>
+    <div>
+        <input type="text" name="test-crossing" id="test-switch">
+        <button id="test-crossing-button" type="button" onclick="testCrossing();">Test Crossing</button>
+    </div>
+    <div>
+        <input type="text" name="test-light" id="test-light">
+        <button id="test-light-button" type="button" onclick="testLight();">Test Light</button>
+    </div>
+    <div>
+        <input type="text" name="route-train-id" id="route-train-id">
+        <input type="text" name="route-train-dest" id="route-train-dest">
+        <button id="route-train-button" type="button" onclick="routeTrain();">Route Train</button>
+    </div>
 {% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block script %}
+    <script type = "text/javascript" src = "{{url_for('static', filename='track_controller.js')}}" ></script>
+{% endblock %}
+
+{% block title %}
+    <title>Track Controller</title>
+{% endblock %}
+
+{% block style %}
+	<link href="{{url_for('static', filename='track_controller.css')}}" rel="stylesheet">
+{% endblock %}
+
+{% block header %}
+	<div class="header-container">
+		<h1 class="header-text">Track Controller</h1>
+	<div>
+{% endblock %}
+
+{% block body %}
+    <div>
+        <h2>Blocks</h2>
+        <ul id="block-list"></ul>
+    </div>
+    <div>
+        <h2>Switches</h2>
+        <ul id="switch-list"></ul>
+    </div>
+    <div>
+        <h2>Crossings</h2>
+        <ul id="crossing-list"></ul>
+    </div>
+{% endblock %}

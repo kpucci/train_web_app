@@ -32,7 +32,8 @@ function makeHandler(httpRequest, retCode, callback)
 			if (httpRequest.status === retCode)
             {
 				console.log("received response text:  " + httpRequest.responseText);
-				callback(httpRequest.responseText);
+                if(callback != null && callback != undefined)
+				            callback(httpRequest.responseText);
 			}
             else
             {

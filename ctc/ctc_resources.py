@@ -26,7 +26,7 @@ class CTCRequestResource(Resource):
 
         ctc_request_args = ctc_request_parser.parse_args()
         request.type = ctc_request_args['type']
-        request.input = ctc_request_args['type']
+        request.input = ctc_request_args['input']
 
         db.session.commit()
 

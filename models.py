@@ -14,6 +14,8 @@ class Block(db.Model):
     cumulative_elevation = db.Column(db.Float)
 
     occupancy = db.Column(db.Boolean)
+    maintenance = db.Column(db.Boolean)
+    broken = db.Column(db.Boolean)
 
     switch_id = db.Column(db.Integer, db.ForeignKey('switch.id'))
     switch = db.relationship("Switch", backref=db.backref("block"))
@@ -24,20 +26,8 @@ class Block(db.Model):
     crossing_id = db.Column(db.Integer, db.ForeignKey('crossing.id'))
     crossing = db.relationship("Crossing", backref=db.backref("block"))
 
-    # train_id = db.Column(db.Integer)
-
-    # message_id = db.Column(db.Integer, db.ForeignKey('message.id'))
-    # message = db.relationship("Message", backref=db.backref("block"))
-
     def _repr_(self):
         return "<Block {}>".format(repr(self.id))
-
-# class Message(db.Model):
-#     id = db.Column(db.Integer, primary_key = True)
-#     text = db.Column(db.String(100))
-#
-#     def _repr_(self):
-#         return "<Message {}>".format(repr(self.id))
 
 class Station(db.Model):
     id = db.Column(db.Integer, primary_key = True)
@@ -120,3 +110,12 @@ class CTCRequest(db.Model):
 
     def _repr_(self):
         return "<CTCRequest {}>".format(repr(self.id))
+
+class TrackControllerBlock(db.Model):
+    id = db.Column(db.Integer, unique = True, primary_key = True)
+    occupancy = db.Column(db.Boolean)
+    maintenance = db.Column(db.Boolean)
+    broken = db.Column(db.Boolean)
+
+    def _repr_(self):
+        return "<Track Controller Block {}>".format(repr(self.id))

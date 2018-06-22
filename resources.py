@@ -1,6 +1,6 @@
 from flask_restful import Resource, fields, reqparse, marshal_with, inputs
 from flask import request, abort, flash, jsonify, json
-from models import db, Block, Station, Switch, Crossing, Light, Train, Message, CTCRequest
+from models import db, Block, Station, Switch, Crossing, Light, Train, Message, CTCRequest, TrackControllerBlock
 
 trainLength = 1000.0
 trainHeight = 100.0
@@ -76,6 +76,28 @@ ctc_request_fields = {
     'input': fields.String
 }
 
+tc_block_fields = {
+    'id': fields.Integer,
+    'occupancy': fields.Boolean,
+    'maintenance': fields.Boolean,
+    'broken': fields.Boolean
+}
+
+tc_block_occ_fields = {
+    'number': fields.Integer,
+    'occupancy': fields.Boolean
+}
+
+tc_block_maint_fields = {
+    'number': fields.Integer,
+    'maintenance': fields.Boolean
+}
+
+tc_block_broken_fields = {
+    'number': fields.Integer,
+    'broken': fields.Boolean
+}
+
 add_block_parser = reqparse.RequestParser(bundle_errors=True)
 add_block_parser.add_argument('id', type=int, location='json')
 add_block_parser.add_argument('number', type=int, required=True, location='json')
@@ -138,6 +160,12 @@ ctc_request_parser = reqparse.RequestParser(bundle_errors=True)
 ctc_request_parser.add_argument('type', type=int, required=True, location='json')
 ctc_request_parser.add_argument('input', type=str, required=True, location='json')
 
+tc_block_parser = reqparse.RequestParser(bundle_errors=True)
+tc_block_parser.add_argument('id', type=int, required=True, location='json')
+tc_block_parser.add_argument('occupancy', type=inputs.boolean, location='json')
+tc_block_parser.add_argument('maintenance', type=inputs.boolean, location='json')
+tc_block_parser.add_argument('broken', type=inputs.boolean, location='json')
+
 class BlockResource(Resource):
     @marshal_with(block_fields)
     def get(self, id):
@@ -196,10 +224,6 @@ class BlockListResource(Resource):
         db.session.commit()
 
         return block, 201
-
-# class BlockOccupancyResource(Resource):
-#
-# class BlockOccupancyListResource(Resource):
 
 class StationResource(Resource):
     @marshal_with(station_fields)
@@ -476,31 +500,6 @@ class TrainListResource(Resource):
 
         return train, 201
 
-# class MessageResource(Resource):
-#     @marshal_with(message_fields)
-#     def get(self, id):
-#         block = Block.query.filter_by(id=id).first()
-#
-#         if not block:
-#             abort(404, "Block %d: not found." % id)
-#
-#
-#         return block, 200
-#
-#     @marshal_with(message_fields)
-#     def put(self, id):
-#         block = Block.query.filter_by(id=id).first()
-#
-#         if not block:
-#             abort(404, "Block %d: not found." % id)
-#
-#         message_args = message_parser.parse_args()
-#         block.message = message_args['text']
-#
-#         db.session.commit()
-#
-#         return block, 201
-
 class MessageResource(Resource):
     @marshal_with(message_fields)
     def get(self, id):
@@ -574,8 +573,79 @@ class CTCRequestResource(Resource):
 
         ctc_request_args = ctc_request_parser.parse_args()
         request.type = ctc_request_args['type']
-        request.input = ctc_request_args['type']
+        request.input = ctc_request_args['input']
 
         db.session.commit()
 
         return request, 201
+
+class TrackControllerBlockResource(Resource):
+    @marshal_with(tc_block_fields)
+    def get(self,id):
+        block = TrackControllerBlock.query.filter_by(id=id).first()
+
+        if not block:
+            abort(404, "Track Controller Block %d: not found." % id)
+
+        return block
+
+    @marshal_with(tc_block_fields)
+    def put(self,id):
+        block_args = tc_block_parser.parse_args()
+        block = TrackControllerBlock.query.filter_by(id=id).first()
+
+        if not block:
+            abort(404, "Track Controller Block %d: not found." % id)
+
+        if block_args['occupancy'] is not None:
+            block.occupancy = block_args['occupancy']
+        if block_args['maintenance'] is not None:
+            block.maintenance = block_args['maintenance']
+        if block_args['broken'] is not None:
+            block.broken = block_args['broken']
+
+        db.session.commit()
+
+        return block, 201
+
+class TrackControllerBlockListResource(Resource):
+    @marshal_with(tc_block_fields)
+    def get(self):
+        blocks = TrackControllerBlock.query.all()
+        return blocks
+
+    @marshal_with(tc_block_fields)
+    def post(self):
+        block_args = tc_block_parser.parse_args()
+        block_id = block_args['id']
+
+        block = Block.query.filter_by(id=block_id).first()
+        tcBlock = TrackControllerBlock(
+            id = block_id,
+            occupancy = block_args['occupancy'],
+            maintenance = block_args['maintenance'],
+            broken = block_args['broken']
+        )
+
+        db.session.add(block)
+        db.session.commit()
+
+        return block, 201
+
+class TrackControllerBlockOccListResource(Resource):
+    @marshal_with(tc_block_occ_fields)
+    def get(self):
+        blocks = TrackControllerBlock.query.all()
+        return blocks
+
+class TrackControllerBlockMaintenanceListResource(Resource):
+    @marshal_with(tc_block_maint_fields)
+    def get(self):
+        blocks = TrackControllerBlock.query.all()
+        return blocks
+
+class TrackControllerBlockBrokenListResource(Resource):
+    @marshal_with(tc_block_broken_fields)
+    def get(self):
+        blocks = TrackControllerBlock.query.all()
+        return blocks

@@ -28,7 +28,8 @@ from models import (
     Light,
     Train,
     Message,
-    CTCRequest
+    CTCRequest,
+    TrackControllerBlock
 )
 
 from resources import (
@@ -45,7 +46,12 @@ from resources import (
     TrainResource,
     TrainListResource,
     MessageResource,
-    CTCRequestResource
+    CTCRequestResource,
+    TrackControllerBlockResource,
+    TrackControllerBlockListResource,
+    TrackControllerBlockOccListResource,
+    TrackControllerBlockMaintenanceListResource,
+    TrackControllerBlockBrokenListResource
 )
 
 app = Flask(__name__)
@@ -76,6 +82,11 @@ api.add_resource(TrainResource, '/trains/<int:id>')
 # api.add_resource(MessageListResource, '/messages/')
 api.add_resource(MessageResource, '/messages/<int:id>')
 api.add_resource(CTCRequestResource, '/ctcrequest/')
+api.add_resource(TrackControllerBlockResource, '/block_status/<int:id>')
+api.add_resource(TrackControllerBlockListResource, '/block_status/')
+api.add_resource(TrackControllerBlockOccListResource, '/block_status/occupancy/')
+api.add_resource(TrackControllerBlockMaintenanceListResource, '/block_status/maintenance/')
+api.add_resource(TrackControllerBlockBrokenListResource, '/block_status/broken/')
 
 @app.cli.command('initdb')
 def initdb_command():
@@ -97,11 +108,20 @@ def testdb_command():
     block1 = Block(id=1,number=1,line="green",length=100.0,grade=0.5,speedLimit=55,elevation=0.5,cumulative_elevation=0.5,occupancy=False)
     db.session.add(block1)
 
-    block2 = Block(id=2,number=2,line="green",length=100.0,grade=1.0,speedLimit=55,elevation=1.0,cumulative_elevation=1.5,occupancy=True)
+    tcBlock1 = TrackControllerBlock(id=1,occupancy=False,maintenance=False,broken=False)
+    db.session.add(tcBlock1)
+
+    block2 = Block(id=2,number=2,line="green",length=100.0,grade=1.0,speedLimit=55,elevation=1.0,cumulative_elevation=1.5,occupancy=False)
     db.session.add(block2)
+
+    tcBlock2 = TrackControllerBlock(id=2,occupancy=False,maintenance=False,broken=False)
+    db.session.add(tcBlock2)
 
     block3 = Block(id=3,number=3,line="green",length=100.0,grade=1.5,speedLimit=55,elevation=1.5,cumulative_elevation=3.0,occupancy=False)
     db.session.add(block3)
+
+    tcBlock3 = TrackControllerBlock(id=3,occupancy=False,maintenance=False,broken=False)
+    db.session.add(tcBlock3)
 
     switch1 = Switch(id=1,state=False)
     db.session.add(switch1)
@@ -143,7 +163,7 @@ def testdb_command():
     db.session.add(msg3)
     msg3.block = block3
 
-    request = CTCRequest(id=0,type="",input="")
+    request = CTCRequest(id=0,type=0,input="")
     db.session.add(request)
 
     db.session.commit()
